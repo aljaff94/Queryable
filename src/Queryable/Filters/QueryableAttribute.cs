@@ -137,7 +137,7 @@ namespace Queryable.Filters
                     }
                 }
 
-                context.Result = count ? new ObjectResult(new QueryableResult(results.Count(), results)) : new ObjectResult(results);
+                context.Result = count ? new ObjectResult(new QueryableResult(resultsCount.Value, results)) : new ObjectResult(results);
             }
             catch (System.Exception ex)
             {
