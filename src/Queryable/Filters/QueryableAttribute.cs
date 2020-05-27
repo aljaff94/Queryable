@@ -36,7 +36,7 @@ namespace Queryable.Filters
 
                 if (results == null || resultsCount <= 0)
                 {
-                    context.Result = count ? new ObjectResult(new QueryableResult(0, null)) : context.Result;
+                    context.Result = count ? new ObjectResult(new QueryableResult(0, null)) : new ObjectResult(context.Result);
                 }
 
                 if (context.HttpContext.Request.Query.TryGetValue("$filter", out var filter))
@@ -148,7 +148,7 @@ namespace Queryable.Filters
             {
                 var logger = context.HttpContext.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger(nameof(QueryableAttribute));
                 logger.LogError(ex, "Error in Queryable equation");
-                context.Result = count ? new ObjectResult(new QueryableResult(0, context.Result)) : context.Result;
+                context.Result = count ? new ObjectResult(new QueryableResult(0, context.Result)) : new ObjectResult(context.Result);
             }
         }
 
