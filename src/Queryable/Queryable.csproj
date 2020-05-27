@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <Title>Queryable</Title>
+    <PackageDescription>Filter, Select, Order, Paginations With One Line</PackageDescription>
+    <Authors>Ahmed A. Ibrahim</Authors>
+    <Copyright>(C) Ahmed A. Ibrahim, 2019</Copyright>
+    <Version>0.1.0</Version>
+    <RepositoryUrl>https://www.github.com/aljaff94/queryable</RepositoryUrl>
+    <ProjectUrl>https://www.github.com/aljaff94/queryable</ProjectUrl>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Z.EntityFramework.Plus.EFCore" Version="3.0.50" />
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+</Project>

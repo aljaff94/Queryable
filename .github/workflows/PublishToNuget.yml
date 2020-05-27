@@ -1,0 +1,17 @@
+name: Publish To Nuget
+
+on:
+  push:
+    branches:
+      - master
+jobs:
+  publish:
+    name: list on nuget
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: publish on version change
+        uses: rohith/publish-nuget@v2
+        with:
+          PROJECT_FILE_PATH: src/Queryable/Queryable.csproj
+          NUGET_KEY: ${{secrets.NUGET_API_KEY}}
