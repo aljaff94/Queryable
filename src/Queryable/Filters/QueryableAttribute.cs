@@ -16,24 +16,26 @@ namespace Queryable.Filters
 
         public void OnActionExecuted(ActionExecutedContext context)
         {
+            var results = (context.Result as ObjectResult).Value as IEnumerable<object>;
+            var resultsCount = results?.Count();
+            var count = true;
+
+            if (context.HttpContext.Request.Query.TryGetValue("$count", out var _count))
+            {
+                if (_count.ToString().Trim().ToLower() == "false")
+                {
+                    count = false;
+                }
+            }
+
             try
             {
-                var results = (context.Result as ObjectResult).Value as IEnumerable<object>;
-                var resultsCount = results?.Count();
-                var count = true;
 
-                if (context.HttpContext.Request.Query.TryGetValue("$count", out var _count))
-                {
-                    if (_count.ToString().Trim().ToLower() == "false")
-                    {
-                        count = false;
-                    }
-                }
 
 
                 if (results == null || resultsCount <= 0)
                 {
-                    context.Result = count ? new ObjectResult(new QueryableResult(0, null)) : new ObjectResult(null);
+                    context.Result = count ? new ObjectResult(new QueryableResult(0, null)) : context.Result;
                 }
 
                 if (context.HttpContext.Request.Query.TryGetValue("$filter", out var filter))
@@ -145,6 +147,7 @@ namespace Queryable.Filters
             {
                 var logger = context.HttpContext.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger(nameof(QueryableAttribute));
                 logger.LogError(ex, "Error in Queryable equation");
+                context.Result = count ? new ObjectResult(new QueryableResult(0, context.Result)) : context.Result;
             }
         }
 
