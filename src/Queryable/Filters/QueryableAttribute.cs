@@ -127,9 +127,9 @@ namespace Queryable.Filters
                 if (resultsCount > length)
                 {
                     var totalSkip = (page - 1) * length;
-                    if (resultsCount > totalSkip)
+                    if (totalSkip > 0 && resultsCount > totalSkip)
                     {
-                        results = results.Skip(totalSkip).Take(length);
+                        results = results.Skip(totalSkip);
                     }
                     if (resultsCount > length)
                     {
