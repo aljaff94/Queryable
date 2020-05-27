@@ -49,14 +49,13 @@ namespace Queryable.Filters
                             switch (parts[1].Trim().ToLower())
                             {
                                 case "eq": results = results.WhereDynamic($"x => x.{parts[0].Trim()} == {parts[2].Trim()}"); break;
-                                case "nq": results = results.WhereDynamic($"x => x.{parts[0].Trim()} != {parts[2].Trim()}"); break;
-                                case "bt": results = results.WhereDynamic($"x => x.{parts[0].Trim()} > {parts[2].Trim()}"); break;
-                                case "be": results = results.WhereDynamic($"x => x.{parts[0].Trim()} >= {parts[2].Trim()}"); break;
+                                case "ne": results = results.WhereDynamic($"x => x.{parts[0].Trim()} != {parts[2].Trim()}"); break;
+                                case "gt": results = results.WhereDynamic($"x => x.{parts[0].Trim()} > {parts[2].Trim()}"); break;
+                                case "ge": results = results.WhereDynamic($"x => x.{parts[0].Trim()} >= {parts[2].Trim()}"); break;
                                 case "lt": results = results.WhereDynamic($"x => x.{parts[0].Trim()} < {parts[2].Trim()}"); break;
                                 case "le": results = results.WhereDynamic($"x => x.{parts[0].Trim()} <= {parts[2].Trim()}"); break;
                                 case "lk": results = results.WhereDynamic($"x => x.{parts[0].Trim()}.Contains(\"{parts[2].Trim()}\")"); break;
                                 case "nk": results = results.WhereDynamic($"x => !x.{parts[0].Trim()}.Contains(\"{parts[2].Trim()}\")"); break;
-
                             }
                         }
                     }
@@ -109,6 +108,9 @@ namespace Queryable.Filters
                             }
                         }
                         results = results.SelectDynamic(x => $"new {{{sb.ToString().Substring(0, sb.Length - 1)}}}");
+
+
+
                     }
                 }
 
@@ -148,7 +150,7 @@ namespace Queryable.Filters
             {
                 var logger = context.HttpContext.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger(nameof(QueryableAttribute));
                 logger.LogError(ex, "Error in Queryable equation");
-                context.Result = count ? new ObjectResult(new QueryableResult(0, context.Result)) : new ObjectResult(context.Result);
+                context.Result = count ? new ObjectResult(new QueryableResult(-1, null)) : new ObjectResult(null);
             }
         }
 
