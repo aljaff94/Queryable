@@ -59,27 +59,6 @@ namespace Queryable.Filters
                     }
                 }
 
-                if (context.HttpContext.Request.Query.TryGetValue("$select", out var select))
-                {
-                    if (!string.IsNullOrWhiteSpace(select))
-                    {
-                        StringBuilder sb = new StringBuilder();
-                        foreach (var item in ((string)select).Split(','))
-                        {
-                            var parts = item.Trim().Split(' ');
-                            if (parts.Count() == 2)
-                            {
-                                sb.Append($"{parts[0]} = x.{parts[1]},");
-                            }
-                            else
-                            {
-                                sb.Append($"x.{item.Trim()},");
-                            }
-                        }
-                        results = results.SelectDynamic(x => $"new {{{sb.ToString().Substring(0, sb.Length - 1)}}}");
-                    }
-                }
-
                 if (context.HttpContext.Request.Query.TryGetValue("$order", out var order))
                 {
                     if (!string.IsNullOrWhiteSpace(order))
@@ -106,6 +85,27 @@ namespace Queryable.Filters
                                 }
                             }
                         }
+                    }
+                }
+
+                if (context.HttpContext.Request.Query.TryGetValue("$select", out var select))
+                {
+                    if (!string.IsNullOrWhiteSpace(select))
+                    {
+                        StringBuilder sb = new StringBuilder();
+                        foreach (var item in ((string)select).Split(','))
+                        {
+                            var parts = item.Trim().Split(' ');
+                            if (parts.Count() == 2)
+                            {
+                                sb.Append($"{parts[0]} = x.{parts[1]},");
+                            }
+                            else
+                            {
+                                sb.Append($"x.{item.Trim()},");
+                            }
+                        }
+                        results = results.SelectDynamic(x => $"new {{{sb.ToString().Substring(0, sb.Length - 1)}}}");
                     }
                 }
 
