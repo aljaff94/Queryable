@@ -120,7 +120,7 @@ namespace Queryable.Filters
                 int length = 10;
                 if (context.HttpContext.Request.Query.TryGetValue("$length", out var lengthAsStr))
                 {
-                    int.TryParse(pageAsStr, out length);
+                    int.TryParse(lengthAsStr, out length);
                 }
 
 
