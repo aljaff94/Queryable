@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -44,7 +45,7 @@ namespace Queryable.Filters
                     {
                         foreach (var item in ((string)filter).Split(','))
                         {
-                            var parts = item.Trim().Split(' ');
+                            var parts = Regex.Matches(item.Trim(), @"(?<match>\w+)|\""(?<match>[\w\s]*)""").Cast<Match>().Select(m => m.Groups["match"].Value).ToList();
                             switch (parts[1].Trim().ToLower())
                             {
                                 case "eq": results = results.WhereDynamic($"x => x.{parts[0].Trim()} == {parts[2].Trim()}"); break;
