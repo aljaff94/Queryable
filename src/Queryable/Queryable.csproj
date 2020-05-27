@@ -6,7 +6,7 @@
     <PackageDescription>Filter, Select, Order, Paginations With One Line</PackageDescription>
     <Authors>Ahmed A. Ibrahim</Authors>
     <Copyright>(C) Ahmed A. Ibrahim, 2019</Copyright>
-    <Version>0.1.0</Version>
+    <Version>0.1.1</Version>
     <RepositoryUrl>https://www.github.com/aljaff94/queryable</RepositoryUrl>
     <ProjectUrl>https://www.github.com/aljaff94/queryable</ProjectUrl>
   </PropertyGroup>

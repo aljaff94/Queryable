@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Queryable.Models;
 
@@ -12,12 +13,6 @@ namespace Queryable.Filters
 {
     public class QueryableAttribute : Attribute, IActionFilter
     {
-        private readonly ILogger _logger;
-
-        public QueryableAttribute(ILoggerFactory loggerFactory)
-        {
-            this._logger = loggerFactory.CreateLogger(nameof(QueryableAttribute));
-        }
 
         public void OnActionExecuted(ActionExecutedContext context)
         {
@@ -146,7 +141,8 @@ namespace Queryable.Filters
             }
             catch (System.Exception ex)
             {
-                _logger.LogError(ex, "Error in Queryable equation");
+                var logger = context.HttpContext.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger(nameof(QueryableAttribute));
+                logger.LogError(ex, "Error in Queryable equation");
             }
         }
 
