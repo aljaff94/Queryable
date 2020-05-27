@@ -109,6 +109,8 @@ namespace Queryable.Filters
                     }
                 }
 
+                resultsCount = results?.Count();
+
                 // skip pages
                 int page = 1;
                 if (context.HttpContext.Request.Query.TryGetValue("$page", out var pageAsStr))
