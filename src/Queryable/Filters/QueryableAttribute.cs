@@ -15,6 +15,22 @@ namespace Queryable.Filters
     public class QueryableAttribute : Attribute, IActionFilter
     {
 
+        public string NormalizeFilter(string equation)
+        {
+            switch (equation)
+            {
+                case "eq": return "x.{0} == {1}";
+                case "nq": return "x.{0} != {1}";
+                case "lk": return "x.{0}.Contains({1})";
+                case "nk": return "!x.{0}.Contains({1})";
+                case "ge": return "x.{0} >= {1}";
+                case "gt": return "x.{0} > {1}";
+                case "le": return "x.{0} <= {1}";
+                case "lt": return "x.{0} < {1}";
+                default: return "";
+            }
+        }
+
         public void OnActionExecuted(ActionExecutedContext context)
         {
             var results = (context.Result as ObjectResult).Value as IEnumerable<object>;
@@ -32,41 +48,46 @@ namespace Queryable.Filters
             try
             {
 
-
-
                 if (results == null || resultsCount <= 0)
                 {
                     context.Result = count ? new ObjectResult(new QueryableResult(0, null)) : new ObjectResult(context.Result);
                 }
 
-                if (context.HttpContext.Request.Query.TryGetValue("$filter", out var filter))
+                if (context.HttpContext.Request.Query.TryGetValue("$filter", out var _filter))
                 {
-                    if (!string.IsNullOrWhiteSpace(filter))
+                    if (!string.IsNullOrWhiteSpace(_filter))
                     {
-                        foreach (var item in ((string)filter).Split(','))
+                        StringBuilder linqBuilder = new StringBuilder("x => ");
+                        var andParts = _filter.ToString().ToLower().Split(" and ");
+                        for (int i = 0; i < andParts.Length; i++)
                         {
-                            var parts = Regex.Matches(item.Trim(), @"(?<match>\w+)|\""(?<match>[\w\s]*)""").Cast<Match>().Select(m => m.Groups["match"].Value).ToList();
-                            switch (parts[1].Trim().ToLower())
+                            if (i > 0)
                             {
-                                case "eq": results = results.WhereDynamic($"x => x.{parts[0].Trim()} == {parts[2].Trim()}"); break;
-                                case "ne": results = results.WhereDynamic($"x => x.{parts[0].Trim()} != {parts[2].Trim()}"); break;
-                                case "gt": results = results.WhereDynamic($"x => x.{parts[0].Trim()} > {parts[2].Trim()}"); break;
-                                case "ge": results = results.WhereDynamic($"x => x.{parts[0].Trim()} >= {parts[2].Trim()}"); break;
-                                case "lt": results = results.WhereDynamic($"x => x.{parts[0].Trim()} < {parts[2].Trim()}"); break;
-                                case "le": results = results.WhereDynamic($"x => x.{parts[0].Trim()} <= {parts[2].Trim()}"); break;
-                                case "lk": results = results.WhereDynamic($"x => x.{parts[0].Trim()}.Contains(\"{parts[2].Trim()}\")"); break;
-                                case "nk": results = results.WhereDynamic($"x => !x.{parts[0].Trim()}.Contains(\"{parts[2].Trim()}\")"); break;
+                                linqBuilder.Append(" && ");
+                            }
+                            var orParts = andParts[i].Split(" or ");
+                            for (int j = 0; j < orParts.Length; j++)
+                            {
+                                if (j > 0)
+                                {
+                                    linqBuilder.Append(" || ");
+                                }
+                                var parts = Regex.Matches(orParts[j].Trim(), @"(?<match>\w+)|\""(?<match>[\w\s]*)""").Cast<Match>().Select(m => m.Groups["match"].Value).ToList();
+                                linqBuilder.AppendFormat(NormalizeFilter(parts[1]), parts[0], double.TryParse(parts[2], out var _t) ? parts[2] : $"\"{parts[2]}\"");
                             }
                         }
+                        var z = linqBuilder.ToString();
+                        results = results.WhereDynamic(linqBuilder.ToString());
                     }
                 }
+
 
                 if (context.HttpContext.Request.Query.TryGetValue("$order", out var order))
                 {
                     if (!string.IsNullOrWhiteSpace(order))
                     {
                         bool isFirstOrder = true;
-                        foreach (var item in ((string)order).Split(','))
+                        foreach (var item in ((string)order).Split(","))
                         {
                             var parts = item.Trim().Split(' ');
                             if (isFirstOrder)
@@ -108,9 +129,6 @@ namespace Queryable.Filters
                             }
                         }
                         results = results.SelectDynamic(x => $"new {{{sb.ToString().Substring(0, sb.Length - 1)}}}");
-
-
-
                     }
                 }
 
