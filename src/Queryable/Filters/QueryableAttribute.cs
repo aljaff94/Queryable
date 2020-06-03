@@ -15,26 +15,26 @@ namespace Queryable.Filters
     public class QueryableAttribute : Attribute, IActionFilter
     {
 
-        public string NormalizeFilter(string equation)
+        protected string NormalizeFilter(string equation)
         {
-            switch (equation)
+            return equation switch
             {
-                case "eq": return "x.{0} == {1}";
-                case "nq": return "x.{0} != {1}";
-                case "lk": return "x.{0}.Contains({1})";
-                case "nk": return "!x.{0}.Contains({1})";
-                case "ge": return "x.{0} >= {1}";
-                case "gt": return "x.{0} > {1}";
-                case "le": return "x.{0} <= {1}";
-                case "lt": return "x.{0} < {1}";
-                default: return "";
-            }
+                "eq" => "x.{0} == {1}",
+                "nq" => "x.{0} != {1}",
+                "lk" => "x.{0}.Contains({1})",
+                "nk" => "!x.{0}.Contains({1})",
+                "ge" => "x.{0} >= {1}",
+                "gt" => "x.{0} > {1}",
+                "le" => "x.{0} <= {1}",
+                "lt" => "x.{0} < {1}",
+                _ => "",
+            };
         }
 
         public void OnActionExecuted(ActionExecutedContext context)
         {
-            var results = (context.Result as ObjectResult).Value as IEnumerable<object>;
-            var resultsCount = results?.Count();
+            var results = (context.Result as ObjectResult).Value as IQueryable<object>;
+            int? resultsCount = 0;
             var count = true;
 
             if (context.HttpContext.Request.Query.TryGetValue("$count", out var _count))
@@ -48,7 +48,7 @@ namespace Queryable.Filters
             try
             {
 
-                if (results == null || resultsCount <= 0)
+                if (results == null)
                 {
                     context.Result = count ? new ObjectResult(new QueryableResult(0, null)) : new ObjectResult(context.Result);
                 }
@@ -95,16 +95,16 @@ namespace Queryable.Filters
                                 isFirstOrder = false;
                                 switch (parts[0].Trim().ToLower())
                                 {
-                                    case "asc": results = results.OrderByDynamic($"x => x.{parts[1].Trim()}"); break;
-                                    case "desc": results = results.OrderByDescendingDynamic($"x => x.{parts[1].Trim()}"); break;
+                                    case "asc": results = (IQueryable<object>)results.OrderByDynamic($"x => x.{parts[1].Trim()}"); break;
+                                    case "desc": results = (IQueryable<object>)results.OrderByDescendingDynamic($"x => x.{parts[1].Trim()}"); break;
                                 }
                             }
                             else
                             {
                                 switch (parts[0].Trim().ToLower())
                                 {
-                                    case "asc": results = (IEnumerable<object>)results.ThenByDynamic($"x => x.{parts[1].Trim()}"); break;
-                                    case "desc": results = (IEnumerable<object>)results.ThenByDescendingDynamic($"x => x.{parts[1].Trim()}"); break;
+                                    case "asc": results = (IQueryable<object>)results.ThenByDynamic($"x => x.{parts[1].Trim()}"); break;
+                                    case "desc": results = (IQueryable<object>)results.ThenByDescendingDynamic($"x => x.{parts[1].Trim()}"); break;
                                 }
                             }
                         }
