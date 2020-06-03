@@ -89,7 +89,13 @@ namespace Queryable.Filters
                         bool isFirstOrder = true;
                         foreach (var item in ((string)order).Split(","))
                         {
-                            var parts = item.Trim().Split(' ');
+                            var _item = item.Trim();
+
+                            if (!_item.Contains(' '))
+                            {
+                                _item = "asc " + _item;
+                            }
+                            var parts = _item.Split(' ');
                             if (isFirstOrder)
                             {
                                 isFirstOrder = false;
