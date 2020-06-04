@@ -58,7 +58,7 @@ namespace Queryable.Filters
                     if (!string.IsNullOrWhiteSpace(_filter))
                     {
                         StringBuilder linqBuilder = new StringBuilder("x => ");
-                        var andParts = _filter.ToString().ToLower().Split(" and ");
+                        var andParts = _filter.ToString().Split(" and ");
                         for (int i = 0; i < andParts.Length; i++)
                         {
                             if (i > 0)
@@ -73,10 +73,26 @@ namespace Queryable.Filters
                                     linqBuilder.Append(" || ");
                                 }
                                 var parts = Regex.Matches(orParts[j].Trim(), @"(?<match>\w+)|\""(?<match>[\w\s]*)""").Cast<Match>().Select(m => m.Groups["match"].Value).ToList();
-                                linqBuilder.AppendFormat(NormalizeFilter(parts[1]), parts[0], double.TryParse(parts[2], out var _t) ? parts[2] : $"\"{parts[2]}\"");
+                                object value;
+                                if (double.TryParse(parts[2], out var _td))
+                                {
+                                    value = _td;
+                                }
+                                else if (bool.TryParse(parts[2], out var _tb))
+                                {
+                                    value = _tb.ToString().ToLower();
+                                }
+                                else if (DateTime.TryParse(parts[2], out var _tdt))
+                                {
+                                    value = _tdt;
+                                }
+                                else
+                                {
+                                    value = $"\"{parts[2]}\"";
+                                }
+                                linqBuilder.AppendFormat(NormalizeFilter(parts[1]), parts[0], value);
                             }
                         }
-                        var z = linqBuilder.ToString();
                         results = results.WhereDynamic(linqBuilder.ToString());
                     }
                 }
