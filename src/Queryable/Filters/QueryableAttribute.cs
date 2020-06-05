@@ -58,7 +58,7 @@ namespace Queryable.Filters
                     if (!string.IsNullOrWhiteSpace(_filter))
                     {
                         StringBuilder linqBuilder = new StringBuilder("x => ");
-                        var andParts = _filter.ToString().Split(" and ");
+                        var andParts = _filter.ToString().ToLower().Split(" and ");
                         for (int i = 0; i < andParts.Length; i++)
                         {
                             if (i > 0)
@@ -76,15 +76,15 @@ namespace Queryable.Filters
                                 object value;
                                 if (double.TryParse(parts[2], out var _td))
                                 {
-                                    value = _td;
+                                    value = parts[2];
                                 }
                                 else if (bool.TryParse(parts[2], out var _tb))
                                 {
-                                    value = _tb.ToString().ToLower();
+                                    value = parts[2];
                                 }
                                 else if (DateTime.TryParse(parts[2], out var _tdt))
                                 {
-                                    value = _tdt;
+                                    value = parts[2];
                                 }
                                 else
                                 {
@@ -181,6 +181,15 @@ namespace Queryable.Filters
                     if (resultsCount > length)
                     {
                         results = results.Take(length);
+                    }
+                }
+
+                if (context.HttpContext.Request.Query.TryGetValue("$first", out var _first))
+                {
+                    if (_first.ToString().Trim().ToLower() == "true")
+                    {
+                        context.Result = new ObjectResult(results.FirstOrDefault());
+                        return;
                     }
                 }
 
