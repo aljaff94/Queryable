@@ -4,16 +4,25 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Queryable.Models;
+using Queryable.Tokenizer;
 
 namespace Queryable.Filters
 {
-    public class QueryableAttribute : Attribute, IActionFilter
+    public class QueryableAttribute : Attribute, IActionFilter, IActionModelConvention
     {
+        public string SingularParameterName { get; set; }
+
+        public QueryableAttribute()
+        {
+        }
 
         protected string NormalizeFilter(string equation)
         {
@@ -48,6 +57,16 @@ namespace Queryable.Filters
             try
             {
 
+                if (!string.IsNullOrWhiteSpace(SingularParameterName))
+                {
+                    if (context.HttpContext.GetRouteData().Values.FirstOrDefault(x => x.Key == SingularParameterName).Value is string value)
+                    {
+                        context.Result = new ObjectResult(results.FirstOrDefaultDynamic($"x => x.{SingularParameterName} == {ValueTypeDetector.DetectDynamicType(value)}"));
+                        return;
+
+                    }
+                }
+
                 if (results == null)
                 {
                     context.Result = count ? new ObjectResult(new QueryableResult(0, null)) : new ObjectResult(context.Result);
@@ -73,24 +92,7 @@ namespace Queryable.Filters
                                     linqBuilder.Append(" || ");
                                 }
                                 var parts = Regex.Matches(orParts[j].Trim(), @"(?<match>\w+)|\""(?<match>[\w\s]*)""").Cast<Match>().Select(m => m.Groups["match"].Value).ToList();
-                                object value;
-                                if (double.TryParse(parts[2], out var _td))
-                                {
-                                    value = parts[2];
-                                }
-                                else if (bool.TryParse(parts[2], out var _tb))
-                                {
-                                    value = parts[2];
-                                }
-                                else if (DateTime.TryParse(parts[2], out var _tdt))
-                                {
-                                    value = parts[2];
-                                }
-                                else
-                                {
-                                    value = $"\"{parts[2]}\"";
-                                }
-                                linqBuilder.AppendFormat(NormalizeFilter(parts[1]), parts[0], value);
+                                linqBuilder.AppendFormat(NormalizeFilter(parts[1]), parts[0], ValueTypeDetector.DetectDynamicType(parts[2]));
                             }
                         }
                         results = results.WhereDynamic(linqBuilder.ToString());
@@ -156,15 +158,15 @@ namespace Queryable.Filters
 
                 resultsCount = results?.Count();
 
-                if (context.HttpContext.Request.Query.TryGetValue("$first", out var _first))
+                if (context.HttpContext.Request.Query.TryGetValue("$singular", out var _singular))
                 {
-                    if (_first.ToString().Trim().ToLower() == "true")
+                    if (_singular.ToString().Trim().ToLower() == "true")
                     {
                         context.Result = new ObjectResult(results.FirstOrDefault());
                         return;
                     }
                 }
-                // skip pages
+
                 int page = 1;
                 if (context.HttpContext.Request.Query.TryGetValue("$page", out var pageAsStr))
                 {
@@ -205,6 +207,24 @@ namespace Queryable.Filters
         public void OnActionExecuting(ActionExecutingContext context)
         {
 
+        }
+
+        public void Apply(ActionModel action)
+        {
+            if (!string.IsNullOrWhiteSpace(SingularParameterName))
+            {
+                var selector = action.Selectors.First();
+                var template = selector.AttributeRouteModel.Template;
+                if (!template.EndsWith("/") && !string.IsNullOrEmpty(template))
+                {
+                    template += "/";
+                }
+                template += $"{{{SingularParameterName}?}}";
+
+                selector.AttributeRouteModel.Template = template;
+                action.Selectors.Clear();
+                action.Selectors.Add(selector);
+            }
         }
     }
 }
