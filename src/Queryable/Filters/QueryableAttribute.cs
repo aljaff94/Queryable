@@ -156,6 +156,14 @@ namespace Queryable.Filters
 
                 resultsCount = results?.Count();
 
+                if (context.HttpContext.Request.Query.TryGetValue("$first", out var _first))
+                {
+                    if (_first.ToString().Trim().ToLower() == "true")
+                    {
+                        context.Result = new ObjectResult(results.FirstOrDefault());
+                        return;
+                    }
+                }
                 // skip pages
                 int page = 1;
                 if (context.HttpContext.Request.Query.TryGetValue("$page", out var pageAsStr))
@@ -181,15 +189,6 @@ namespace Queryable.Filters
                     if (resultsCount > length)
                     {
                         results = results.Take(length);
-                    }
-                }
-
-                if (context.HttpContext.Request.Query.TryGetValue("$first", out var _first))
-                {
-                    if (_first.ToString().Trim().ToLower() == "true")
-                    {
-                        context.Result = new ObjectResult(results.FirstOrDefault());
-                        return;
                     }
                 }
 
