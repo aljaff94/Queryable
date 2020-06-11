@@ -45,6 +45,7 @@ namespace Queryable.Filters
             var results = (context.Result as ObjectResult).Value as IQueryable<object>;
             int? resultsCount = 0;
             var count = true;
+            bool isSingular = false;
 
             if (context.HttpContext.Request.Query.TryGetValue("$count", out var _count))
             {
@@ -61,6 +62,7 @@ namespace Queryable.Filters
                 {
                     if (context.HttpContext.GetRouteData().Values.FirstOrDefault(x => x.Key == SingularParameterName).Value is string value)
                     {
+                        isSingular = true;
                         context.Result = new ObjectResult(results.FirstOrDefaultDynamic($"x => x.{SingularParameterName} == {ValueTypeDetector.DetectDynamicType(value)}"));
                         return;
 
@@ -200,7 +202,15 @@ namespace Queryable.Filters
             {
                 var logger = context.HttpContext.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger(nameof(QueryableAttribute));
                 logger.LogError(ex, "Error in Queryable equation");
-                context.Result = count ? new ObjectResult(new QueryableResult(-1, null)) : new ObjectResult(null);
+                if (isSingular)
+                {
+                    context.Result = new StatusCodeResult(204);
+                }
+                else
+                {
+                    context.Result = count ? new ObjectResult(new QueryableResult(0, null)) : new ObjectResult(null);
+
+                }
             }
         }
 
